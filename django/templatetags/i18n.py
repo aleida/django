@@ -148,11 +148,15 @@ class BlockTranslateNode(Node):
         data = dict([(v, _render_value_in_context(context.get(v, ''), context)) for v in vars])
         context.pop()
         try:
-            if data:
-                result = result % data
-        except KeyError:
-            with translation.override(None):
-                result = self.render(context)
+            result = result % data
+        except (KeyError, ValueError, TypeError):
+            try:
+                # Try with isolated '%'
+                result = re.sub(u'%(?!\()', u'%%', result) % data
+            except (KeyError, ValueError, TypeError):
+                with translation.override(None):
+                    result = self.render(context)
+
         return result
 
 
