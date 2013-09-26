@@ -1,4 +1,5 @@
 import sys
+import logging
 
 from django import http
 from django.core import signals
@@ -20,6 +21,7 @@ class BaseHandler(object):
 
     def __init__(self):
         self._request_middleware = self._view_middleware = self._template_response_middleware = self._response_middleware = self._exception_middleware = None
+        self.logger = logging.getLogger('mmp')
 
 
     def load_middleware(self):
@@ -88,6 +90,12 @@ class BaseHandler(object):
                 for middleware_method in self._request_middleware:
                     response = middleware_method(request)
                     if response:
+                        self.logger.debug('Middleware class: %s\n process_request returns: \n%s%s\n Response headers%s' %(
+                            middleware_method.im_class,
+                            response.__class__,
+                            response.status_code,
+                            response._headers
+                        ))
                         break
 
                 if response is None:
