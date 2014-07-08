@@ -401,10 +401,12 @@ class Options(object):
         for klass in get_models(include_auto_created=True, only_installed=False):
             for f in klass._meta.local_fields:
                 if f.rel and not isinstance(f.rel.to, basestring):
-                    if self == f.rel.to._meta:
+                    # collect models that are proxy for another models which are related to current field
+                    proxying_models = [model for model in get_models(include_auto_created=True, only_installed=False) if model._meta.proxy_for_model == f.rel.to._meta.concrete_model]
+                    if self == f.rel.to._meta or self in [model._meta for model in proxying_models]:
                         cache[RelatedObject(f.rel.to, klass, f)] = None
                         proxy_cache[RelatedObject(f.rel.to, klass, f)] = None
-                    elif self.concrete_model == f.rel.to._meta.concrete_model:
+                    elif self.concrete_model == f.rel.to._meta.concrete_model or self.concrete_model in proxying_models:
                         proxy_cache[RelatedObject(f.rel.to, klass, f)] = None
         self._related_objects_cache = cache
         self._related_objects_proxy_cache = proxy_cache
