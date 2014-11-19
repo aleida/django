@@ -1580,6 +1580,7 @@ class IntegerField(Field):
         'invalid': _("'%(value)s' value must be an integer."),
     }
     description = _("Integer")
+    MAX_INT = 2147483647  # http://www.postgresql.org/docs/9.3/interactive/datatype-numeric.html
 
     @cached_property
     def validators(self):
@@ -1622,7 +1623,11 @@ class IntegerField(Field):
             )
 
     def formfield(self, **kwargs):
-        defaults = {'form_class': forms.IntegerField}
+        defaults = {
+            'form_class': forms.IntegerField,
+            'min_value': -IntegerField.MAX_INT - 1,
+            'max_value': IntegerField.MAX_INT,
+        }
         defaults.update(kwargs)
         return super(IntegerField, self).formfield(**defaults)
 
