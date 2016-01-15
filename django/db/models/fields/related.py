@@ -397,11 +397,18 @@ class ForeignRelatedObjectsDescriptor(object):
 
     def __set__(self, instance, value):
         manager = self.__get__(instance)
-        # If the foreign key can support nulls, then completely clear the related set.
-        # Otherwise, just move the named objects into the set.
-        if self.related.field.null:
-            manager.clear()
-        manager.add(*value)
+
+        existing_objects = set(manager.all())
+        new_objects = set(value)
+
+        # define objects that have to be added / removed
+        objects_to_remove = existing_objects - new_objects
+        objects_to_add = new_objects - existing_objects
+
+        for obj in objects_to_remove:
+            manager.remove(obj)
+
+        manager.add(*objects_to_add)
 
     @cached_property
     def related_manager_cls(self):
